@@ -11,6 +11,7 @@ An example of scanned images using Kinect v1:
 ## Dependencies
 - OpenCV 2.4.X -- images processing
 - OpenNI2 -- driver
+
 The original code used Boost for some filesystem operations. I don't have time to learn how to fix the trillion import errors that Visual Studio throws me when I import the Boost library, so the Boost part is translated in (possibly) non-portable vanilla C++ code. Is it ISO compliant? I have no idea. Maybe I'll fix this in the future.
 
 ## Build
