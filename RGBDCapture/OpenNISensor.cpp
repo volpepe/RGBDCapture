@@ -1,5 +1,15 @@
 #include "OpenNISensor.h"
 
+Point selectedPoint{ 0,0 };
+
+void printDepthValue(int event, int x, int y, int flag, void* param)
+{
+	if (event == EVENT_MOUSEMOVE)
+	{
+		selectedPoint = Point(x, y);
+	}
+}
+
 OpenNISensor::OpenNISensor()
 {
 	m_flagInitSuccessful = m_flagShowImage = true;
@@ -84,41 +94,6 @@ bool OpenNISensor::init()
 		m_flagInitSuccessful = false;
 		return m_flagInitSuccessful;
 	}	
-	
-	///**
-	//Get all supported video mode for depth and color sensors, since each device
-	//always supports multiple video modes, such as 320x240/640x480 resolution,
-	//30/60 fps for depth or color sensors.
-	//*/
-	//const SensorInfo* depthSensorInfo = m_device[i].getSensorInfo(SENSOR_DEPTH);
-	//int depthVideoModeNum = depthSensorInfo->getSupportedVideoModes().getSize();
-	//cout << "Depth video modes: " << endl;
-	//for (int j = 0; j < depthVideoModeNum; ++j)
-	//{
-	//	VideoMode videomode = depthSensorInfo->getSupportedVideoModes()[j];
-	//	cout << "Mode " << j << ": Resolution = (" << videomode.getResolutionX() 
-	//		<< "," << videomode.getResolutionY() << ")"
-	//		<< ", PixelFormat = "<< videomode.getPixelFormat()
-	//		<< ", FPS = " << videomode.getFps() << endl;
-	//}
-	//const SensorInfo* colorSensorInfo = m_device[i].getSensorInfo(SENSOR_COLOR);
-	//int colorVideoModeNum = colorSensorInfo->getSupportedVideoModes().getSize();
-	//cout << "Color video modes: " << endl;
-	//for (int j = 0; j < colorVideoModeNum; ++j)
-	//{
-	//	VideoMode videomode = colorSensorInfo->getSupportedVideoModes()[j];
-	//	cout << "Mode " << j << ": Resolution = (" << videomode.getResolutionX() 
-	//		<< "," << videomode.getResolutionY() << ")"
-	//		<< ", PixelFormat = "<< videomode.getPixelFormat()
-	//		<< ", FPS = " << videomode.getFps() << endl;
-	//}
-
-	//// Set video modes for depth and color streams if the default ones are not
-	//// waht we need. You can check the video modes using above codes.
-	////m_depthStream[i].setVideoMode(depthSensorInfo->getSupportedVideoModes()[0]);
-	////VideoMode videomode = colorSensorInfo->getSupportedVideoModes()[9];
-	////videomode.setPixelFormat(openni::PIXEL_FORMAT_RGB888);
-	////openni::Status status = m_colorStream[i].setVideoMode(colorSensorInfo->getSupportedVideoModes()[9]);
 
 
 	if (!m_depthStream.isValid() || !m_colorStream.isValid())
@@ -155,12 +130,19 @@ void OpenNISensor::scan()
 		return;
 	}
 
+	cout << "Creating folders..." << endl;
 	createRGBDFolders();
+	cout << "Folders created!" << endl;
 
-	string strDepthWindowName("Depth"), strColorWindowName("Color");
+	string strDepthWindowName("Depth"), strColorWindowName("Color"), strVisualDepthName("Visual Depth");
 	cv::namedWindow(strDepthWindowName, CV_WINDOW_AUTOSIZE);
 	cv::namedWindow(strColorWindowName, CV_WINDOW_AUTOSIZE);
+	cv::namedWindow(strVisualDepthName, CV_WINDOW_AUTOSIZE);
 	
+	int frameSkip{ 0 };
+
+	setMouseCallback(strColorWindowName, printDepthValue, 0);
+
 	while (true)
 	{
 		m_colorStream.readFrame(&m_colorFrame);
@@ -172,7 +154,11 @@ void OpenNISensor::scan()
 			if (m_sensorType == 0)
 				cv::flip(cImageBGR, cImageBGR, 1);
 			cv::imshow(strColorWindowName, cImageBGR);
-			cv::imwrite(m_strRGBDFolder + "/rgb/" + to_string(m_frameIdx) + ".png", cImageBGR);
+			if (frameSkip == c_frameSkipMax)
+			{
+				cout << "Saving color frame on system..." << endl;
+				cv::imwrite(m_strRGBDFolder + "/rgb/" + to_string(m_frameIdx) + ".png", cImageBGR);
+			}
 		}
 		else
 		{
@@ -185,17 +171,36 @@ void OpenNISensor::scan()
 		{
 			cv::Mat mImageDepth(m_depthHeight, m_depthWidth, CV_16UC1, (void*)m_depthFrame.getData());
 			cv::Mat cScaledDepth;
-			mImageDepth.convertTo(cScaledDepth, CV_16UC1, c_depthScaleFactor);
+			mImageDepth.convertTo(cScaledDepth, CV_16UC1, c_visualDepthScaleFactor);
 			if (m_sensorType == 0)
+			{
 				cv::flip(cScaledDepth, cScaledDepth, 1);
+				cv::flip(mImageDepth, mImageDepth, 1);
+			}
 			cv::imshow(strDepthWindowName, cScaledDepth);
-			cv::imwrite(m_strRGBDFolder + "/depth/" + to_string(m_frameIdx) + ".png", cScaledDepth);
+			if (frameSkip == c_frameSkipMax)
+			{
+				cv::imwrite(m_strRGBDFolder + "/depth/" + to_string(m_frameIdx) + ".png", mImageDepth);
+			}
+			double depthVal = mImageDepth.at<DepthValueType>(selectedPoint) / 1000.;
+			cv::Mat mDepthIndicator(100, 200, CV_16UC1);
+			putText(mDepthIndicator,
+				to_string(depthVal),
+				Point(0,50),
+				FONT_HERSHEY_DUPLEX,
+				1.0,
+				RGB(200, 120, 9),
+				2);
+			cv::imshow(strVisualDepthName, mDepthIndicator);
 		}
 		else
 		{
 			cerr << "ERROR: Cannot read depth frame from depth stream. Quitting..." << endl;
 			return;
 		}
+
+		// update frameskip
+		frameSkip = frameSkip == c_frameSkipMax ? 0 : frameSkip + 1;
 
 		m_frameIdx++;
 		if (cv::waitKey(1) == 27) // esc to quit

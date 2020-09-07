@@ -3,7 +3,12 @@
 
 #include <iostream>
 #include <string>
-#include <boost/filesystem.hpp>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <Windows.h>
+#include <direct.h>
+
+#include "utils.h"
 
 using namespace std;
 

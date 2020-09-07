@@ -4,10 +4,12 @@
     <ClInclude Include="global.h" />
     <ClInclude Include="RGBDSensor.h" />
     <ClInclude Include="OpenNISensor.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RGBDSensor.cpp" />
     <ClCompile Include="OpenNISensor.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
 </Project>

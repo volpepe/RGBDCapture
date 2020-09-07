@@ -2,7 +2,7 @@
 
 This code is to capture RGB-D data into PNG images with an OpenNI-drived depth camera (Kinect v1, Asus XTion, etc). The RGB images are 640x480 8-bit images, and the depth images are 640×480 16-bit monochrome images. The RGB-D data is exactly in the format of [TUM RGB-D data](http://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats). You can use their tools to analyze the data.
 
-This code is written in C++ and is tested successfully in Visual Studio 2013 in Windows and Ubuntu 14.04.
+This code is written in C++ and is tested successfully in Visual Studio 2019 in Windows.
 
 An example of scanned images using Kinect v1: 
 

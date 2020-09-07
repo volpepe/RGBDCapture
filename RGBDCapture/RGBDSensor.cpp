@@ -2,11 +2,16 @@
 
 void RGBDSensor::createRGBDFolders()
 {
-	string folder = "./save";
+	// Create general save folder if it doesn't exist
+	if (!isExistingDir(c_saveFolder))
+	{
+		_mkdir(c_saveFolder.c_str());
+	}
+	string folder = c_saveFolder + "/save";
 	int i = 0;
 	while (true){
 		string dir = folder + to_string(i);
-		if (boost::filesystem::is_directory(dir))
+		if(isExistingDir(dir))
 		{
 			i++;
 		}
@@ -15,9 +20,9 @@ void RGBDSensor::createRGBDFolders()
 			m_strRGBDFolder = dir;
 			string dirDepth = dir + "/depth/";
 			string dirColor = dir + "/rgb/";
-			boost::filesystem::create_directory(dir);
-			boost::filesystem::create_directory(dirDepth);
-			boost::filesystem::create_directory(dirColor);
+			_mkdir(dir.c_str());
+			_mkdir(dirDepth.c_str());
+			_mkdir(dirColor.c_str());
 			break;
 		}
 	}

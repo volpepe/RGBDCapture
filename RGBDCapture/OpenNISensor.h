@@ -2,9 +2,11 @@
 #define OPENNISENSOR_H
 
 #include "RGBDSensor.h"
-#include "global.h"
 #include "OpenNI.h"
 #include <opencv2/opencv.hpp>
+
+#include "utils.h"
+
 
 class OpenNISensor : public RGBDSensor
 {
